@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
+import { useState, useRef, useEffect } from "react";
 import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
@@ -9,6 +10,7 @@ function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
     ref.current = value;
+    // ref.old = value;
   });
   return ref.current;
 }
@@ -26,12 +28,15 @@ function App(props) {
   const [filter, setFilter] = useState('All');
 
   function toggleTaskCompleted(id) {
+    if (Number(id) === NaN) {
+      return;
+    }
     const updatedTasks = tasks.map(task => {
       // if this task has the same ID as the edited task
       if (id === task.id) {
         // use object spread to make a new obkect
         // whose `completed` prop has been inverted
-        return {...task, completed: !task.completed}
+        return { ...task, completed: !task.completed }
       }
       return task;
     });
@@ -47,29 +52,32 @@ function App(props) {
 
   function editTask(id, newName) {
     const editedTaskList = tasks.map(task => {
-    // if this task has the same ID as the edited task
+      // if this task has the same ID as the edited task
       if (id === task.id) {
-        //
-        return {...task, name: newName}
+        if (task.editable == true) {
+          const newTask = { ...task, name: newName };
+          return newTask;
+        }
       }
       return task;
     });
     setTasks(editedTaskList);
   }
 
+
   const taskList = tasks
-  .filter(FILTER_MAP[filter])
-  .map(task => (
-    <Todo
-      id={task.id}
-      name={task.name}
-      completed={task.completed}
-      key={task.id}
-      toggleTaskCompleted={toggleTaskCompleted}
-      deleteTask={deleteTask}
-      editTask={editTask}
-    />
-  ));
+    .filter(FILTER_MAP[filter])
+    .map(task => (
+      <Todo
+        id={task.id}
+        name={task.name}
+        completed={task.completed}
+        key={task.id}
+        toggleTaskCompleted={toggleTaskCompleted}
+        deleteTask={deleteTask}
+        editTask={editTask}
+      />
+    ));
 
   const filterList = FILTER_NAMES.map(name => (
     <FilterButton
@@ -91,12 +99,29 @@ function App(props) {
 
   const listHeadingRef = useRef(null);
   const prevTaskLength = usePrevious(tasks.length);
+  const alternativeUrl = "http://todo.org";
+
+  // function getIntegrity() {
+  //   "sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC";
+  // }
+
+  useEffect(() => {
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (isDarkMode) {
+      const script = document.createElement("script"); // Sensitive
+      script.src = "https://cdnexample.com/dark-mode-styles.js";
+      // script.integrity = getIntegrity();
+      document.head.appendChild(script);
+    }
+  }, []);
 
   useEffect(() => {
     if (tasks.length - prevTaskLength === -1) {
       listHeadingRef.current.focus();
     }
-  }, [tasks.length, prevTaskLength]);
+    return;
+  }, [tasks.length, , prevTaskLength]);
 
   return (
     <div className="todoapp stack-large">
@@ -114,6 +139,7 @@ function App(props) {
       >
         {taskList}
       </ul>
+      <a href={alternativeUrl}>Use another TODO tracker</a>
     </div>
   );
 }
